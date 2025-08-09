@@ -37,7 +37,7 @@ const App = () => {
       const response = await fetch("https://vicky-production.up.railway.app/create-web-call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agent_id: "agent_8e3ee5fa5f3ee9e20ea6cbcccf" }),
+        body: JSON.stringify({ agent_id: "agent_8d6d93979343a84e1cdce8a15c" }),
       });
 
       if (!response.ok) {

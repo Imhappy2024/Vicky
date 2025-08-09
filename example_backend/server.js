@@ -8,8 +8,8 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-const API_KEY = process.env.RETELL_API_KEY || process.env.API_KEY || "key_16636d19c2dc034ab42d190655d4"; // prefer RETELL_API_KEY
-const DEFAULT_AGENT_ID = process.env.AGENT_ID || "agent_8e3ee5fa5f3ee9e20ea6cbcccf";
+const API_KEY = process.env.RETELL_API_KEY || process.env.API_KEY || "key_a8a85b06333b8514a8c864ba0b88"; // prefer RETELL_API_KEY
+const DEFAULT_AGENT_ID = process.env.AGENT_ID || "agent_8d6d93979343a84e1cdce8a15c";
 
 app.get("/health", (_, res) => res.status(200).send("ok"));
 
