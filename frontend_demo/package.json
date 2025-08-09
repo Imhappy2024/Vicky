@@ -2,6 +2,7 @@
   "name": "retell-frontend-nodejs-demo",
   "version": "1.1.0",
   "private": true,
+  "homepage": "https://imhappy2024.github.io/Vicky/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -11,24 +12,21 @@
     "buffer": "^6.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "retell-client-js-sdk": "^2.0.3",
+    "react-scripts": "^5.0.1",
+    "retell-client-js-sdk": "^2.0.7",
     "stream": "^0.0.2"
   },
   "devDependencies": {
-    "@types/node": "^20.10.4"
+    "@types/node": "^20.10.4",
+    "gh-pages": "^6.3.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [

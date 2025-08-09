@@ -1,116 +1,144 @@
-import React, { useEffect, useState } from "react";
-import "./App.css";
+import React, { useEffect, useRef, useState } from "react";
 import { RetellWebClient } from "retell-client-js-sdk";
+import "./App.css";
 
-const agentId = "ENTER_YOUR_AGENT_ID";
-
-interface RegisterCallResponse {
-  access_token: string;
+declare global {
+  interface Window {
+    retellWeb?: {
+      createCallObject: (args: { conversationId: string }) => Promise<{ start: () => Promise<void> }>;
+    };
+  }
 }
 
-const retellWebClient = new RetellWebClient();
-
 const App = () => {
-  const [isCalling, setIsCalling] = useState(false);
+  const retell = useRef(new RetellWebClient()).current;
+  const [isLoading, setIsLoading] = useState(false);
+  const [inCall, setInCall] = useState(false);
 
-  // Initialize the SDK
   useEffect(() => {
-    retellWebClient.on("call_started", () => {
-      console.log("call started");
-    });
-    
-    retellWebClient.on("call_ended", () => {
-      console.log("call ended");
-      setIsCalling(false);
-    });
-    
-    // When agent starts talking for the utterance
-    // useful for animation
-    retellWebClient.on("agent_start_talking", () => {
-      console.log("agent_start_talking");
-    });
-    
-    // When agent is done talking for the utterance
-    // useful for animation
-    retellWebClient.on("agent_stop_talking", () => {
-      console.log("agent_stop_talking");
-    });
-    
-    // Real time pcm audio bytes being played back, in format of Float32Array
-    // only available when emitRawAudioSamples is true
-    retellWebClient.on("audio", (audio) => {
-      // console.log(audio);
-    });
-    
-    // Update message such as transcript
-    // You can get transcrit with update.transcript
-    // Please note that transcript only contains last 5 sentences to avoid the payload being too large
-    retellWebClient.on("update", (update) => {
-      // console.log(update);
-    });
-    
-    retellWebClient.on("metadata", (metadata) => {
-      // console.log(metadata);
-    });
-    
-    retellWebClient.on("error", (error) => {
-      console.error("An error occurred:", error);
-      // Stop the call
-      retellWebClient.stopCall();
-    });
-  }, []);
+    const onStarted = () => {
+      setInCall(true);
+      setIsLoading(false); // ✅ re-enable button when connected
+    };
+    const onEnded = () => {
+      setInCall(false);
+      setIsLoading(false);
+    };
+    const onError = (e: any) => {
+      console.error("Retell error:", e);
+      setInCall(false);
+      setIsLoading(false);
+    };
 
-  const toggleConversation = async () => {
-    if (isCalling) {
-      retellWebClient.stopCall();
-    } else {
-      const registerCallResponse = await registerCall(agentId);
-      if (registerCallResponse.access_token) {
-        retellWebClient
-          .startCall({
-            accessToken: registerCallResponse.access_token,
-          })
-          .catch(console.error);
-        setIsCalling(true); // Update button to "Stop" when conversation starts
+    retell.on?.("call_started", onStarted);
+    retell.on?.("call_ended", onEnded);
+    retell.on?.("error", onError);
+    return () => {
+      retell.off?.("call_started", onStarted);
+      retell.off?.("call_ended", onEnded);
+      retell.off?.("error", onError);
+    };
+  }, [retell]);
+
+  const startCall = async () => {
+    if (isLoading || inCall) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        "https://fuzzy-disco-9765q665x47j2pwqj-3001.app.github.dev/create-web-call",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent_id: "agent_8e3ee5fa5f3ee9e20ea6cbcccf" }),
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(`Backend ${response.status}: ${text || response.statusText}`);
       }
+
+      const data = await response.json();
+      if (data.access_token) {
+        await retell.startCall({ accessToken: data.access_token });
+        return; // call_started will flip state
+      }
+      if (data.web_call_url || data.url) {
+        window.open(data.web_call_url || data.url, "_blank", "noopener,noreferrer");
+        setIsLoading(false);
+        return;
+      }
+      if (data.conversation_id) {
+        if (!window.retellWeb) throw new Error("Legacy SDK not available.");
+        const call = await window.retellWeb.createCallObject({ conversationId: data.conversation_id });
+        await call.start();
+        setInCall(true);
+        setIsLoading(false);
+        return;
+      }
+      throw new Error("Backend missing access_token, web_call_url, or conversation_id.");
+    } catch (err: any) {
+      console.error("Error starting call:", err);
+      alert(err?.message || String(err));
+      setIsLoading(false);
     }
   };
 
-  async function registerCall(agentId: string): Promise<RegisterCallResponse> {
+  const endCall = async () => {
     try {
-      // Update the URL to match the new backend endpoint you created
-      const response = await fetch("http://localhost:8080/create-web-call", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          agent_id: agentId, // Pass the agentId as agent_id
-          // You can optionally add metadata and retell_llm_dynamic_variables here if needed
-          // metadata: { your_key: "your_value" },
-          // retell_llm_dynamic_variables: { variable_key: "variable_value" }
-        }),
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-  
-      const data: RegisterCallResponse = await response.json();
-      return data;
-    } catch (err) {
-      console.log(err);
-      throw new Error(err);
+      await (retell as any).stopCall?.();
+      await (retell as any).endCall?.();
+      await (retell as any).hangup?.();
+    } catch (e) {
+      console.warn("End call warning:", e);
+    } finally {
+      setInCall(false);
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleClick = () => (inCall ? endCall() : startCall());
+  const label = inCall ? "END CALL" : isLoading ? "CONNECTING..." : "VOICE CHAT";
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button onClick={toggleConversation}>
-          {isCalling ? "Stop" : "Start"}
+    <div className="voice-widget">
+      <div className="voice-widget-main">
+        <div className="voice-logo">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Silver_disc_icon.png"
+            alt="Logo"
+            style={{ width: "30px", height: "30px", borderRadius: "50%" }}
+          />
+        </div>
+
+        <button
+          className={`voice-chat-btn ${isLoading || inCall ? "active" : ""}`}
+          onClick={handleClick}
+          disabled={isLoading && !inCall}  // ✅ disable only while connecting
+          title={inCall ? "End the call" : "Start a call"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            style={{ width: "20px", height: "20px", marginRight: "8px" }}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.25 6.75c0 8.284 6.716 15 15 15h0a1.5 1.5 0 001.5-1.5v-2.25a1.5 1.5 0 00-1.394-1.493l-3.553-.296a1.5 1.5 0 00-1.284.595l-1.353 1.804a11.948 11.948 0 01-5.547-5.547l1.804-1.353a1.5 1.5 0 00.595-1.284l-.296-3.553A1.5 1.5 0 004.5 3.75H2.25A1.5 1.5 0 00.75 5.25v.002z"
+            />
+          </svg>
+          {label}
         </button>
-      </header>
+
+        <div className="voice-lang">
+          <span className="flag-emoji">🇺🇸</span>
+          <span style={{ fontSize: "14px", fontWeight: 600 }}>EN</span>
+        </div>
+      </div>
     </div>
   );
 };
