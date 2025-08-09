@@ -45,7 +45,7 @@ const App = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "https://fuzzy-disco-9765q665x47j2pwqj-3001.app.github.dev/create-web-call",
+        "https://vicky-production.up.railway.app/create-web-call",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
