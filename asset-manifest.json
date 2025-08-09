@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/Vicky/static/css/main.54d41957.css",
-    "main.js": "/Vicky/static/js/main.d9f14162.js",
+    "main.js": "/Vicky/static/js/main.46716165.js",
     "index.html": "/Vicky/index.html",
     "main.54d41957.css.map": "/Vicky/static/css/main.54d41957.css.map",
-    "main.d9f14162.js.map": "/Vicky/static/js/main.d9f14162.js.map"
+    "main.46716165.js.map": "/Vicky/static/js/main.46716165.js.map"
   },
   "entrypoints": [
     "static/css/main.54d41957.css",
-    "static/js/main.d9f14162.js"
+    "static/js/main.46716165.js"
   ]
 }
