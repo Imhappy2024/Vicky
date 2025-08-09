@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/Vicky/static/css/main.f206036d.css",
+    "main.js": "/Vicky/static/js/main.70f36d24.js",
+    "index.html": "/Vicky/index.html",
+    "main.f206036d.css.map": "/Vicky/static/css/main.f206036d.css.map",
+    "main.70f36d24.js.map": "/Vicky/static/js/main.70f36d24.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f206036d.css",
+    "static/js/main.70f36d24.js"
+  ]
+}
