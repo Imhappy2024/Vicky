@@ -16,19 +16,9 @@ const App = () => {
   const [inCall, setInCall] = useState(false);
 
   useEffect(() => {
-    const onStarted = () => {
-      setInCall(true);
-      setIsLoading(false); // ✅ re-enable button when connected
-    };
-    const onEnded = () => {
-      setInCall(false);
-      setIsLoading(false);
-    };
-    const onError = (e: any) => {
-      console.error("Retell error:", e);
-      setInCall(false);
-      setIsLoading(false);
-    };
+    const onStarted = () => { setInCall(true); setIsLoading(false); };
+    const onEnded = () => { setInCall(false); setIsLoading(false); };
+    const onError = (e: any) => { console.error("Retell error:", e); setInCall(false); setIsLoading(false); };
 
     retell.on?.("call_started", onStarted);
     retell.on?.("call_ended", onEnded);
@@ -44,14 +34,11 @@ const App = () => {
     if (isLoading || inCall) return;
     setIsLoading(true);
     try {
-      const response = await fetch(
-        "https://vicky-production.up.railway.app/create-web-call",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent_id: "agent_8e3ee5fa5f3ee9e20ea6cbcccf" }),
-        }
-      );
+      const response = await fetch("https://vicky-production.up.railway.app/create-web-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: "agent_8e3ee5fa5f3ee9e20ea6cbcccf" }),
+      });
 
       if (!response.ok) {
         const text = await response.text().catch(() => "");
@@ -59,9 +46,10 @@ const App = () => {
       }
 
       const data = await response.json();
+
       if (data.access_token) {
         await retell.startCall({ accessToken: data.access_token });
-        return; // call_started will flip state
+        return;
       }
       if (data.web_call_url || data.url) {
         window.open(data.web_call_url || data.url, "_blank", "noopener,noreferrer");
@@ -76,6 +64,7 @@ const App = () => {
         setIsLoading(false);
         return;
       }
+
       throw new Error("Backend missing access_token, web_call_url, or conversation_id.");
     } catch (err: any) {
       console.error("Error starting call:", err);
@@ -102,43 +91,28 @@ const App = () => {
 
   return (
     <div className="voice-widget">
-      <div className="voice-widget-main">
-        <div className="voice-logo">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Silver_disc_icon.png"
-            alt="Logo"
-            style={{ width: "30px", height: "30px", borderRadius: "50%" }}
-          />
-        </div>
-
-        <button
-          className={`voice-chat-btn ${isLoading || inCall ? "active" : ""}`}
-          onClick={handleClick}
-          disabled={isLoading && !inCall}  // ✅ disable only while connecting
-          title={inCall ? "End the call" : "Start a call"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            style={{ width: "20px", height: "20px", marginRight: "8px" }}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M2.25 6.75c0 8.284 6.716 15 15 15h0a1.5 1.5 0 001.5-1.5v-2.25a1.5 1.5 0 00-1.394-1.493l-3.553-.296a1.5 1.5 0 00-1.284.595l-1.353 1.804a11.948 11.948 0 01-5.547-5.547l1.804-1.353a1.5 1.5 0 00.595-1.284l-.296-3.553A1.5 1.5 0 004.5 3.75H2.25A1.5 1.5 0 00.75 5.25v.002z"
-            />
-          </svg>
-          {label}
-        </button>
-
-        <div className="voice-lang">
-          <span className="flag-emoji">🇺🇸</span>
-          <span style={{ fontSize: "14px", fontWeight: 600 }}>EN</span>
-        </div>
+      <div className="voice-logo">
+        <img
+          src="https://goxxii.com/wp-content/uploads/2025/08/836e723f-c3a3-432e-bd51-06252fb3c19c.png"
+          alt="XXII Century"
+        />
       </div>
+
+      <button
+        className={`voice-chat-btn ${isLoading || inCall ? "active" : ""}`}
+        onClick={handleClick}
+        disabled={isLoading && !inCall}
+        title={inCall ? "End the call" : "Start a call"}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path
+            d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.19 18a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 3.33 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.95.37 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.33 1.86.58 2.81.7A2 2 0 0 1 22 16.92z"
+            fill="currentColor"
+          />
+        </svg>
+        {label}
+      </button>
+      {/* Language selector removed on purpose */}
     </div>
   );
 };
